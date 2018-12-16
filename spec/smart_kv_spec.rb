@@ -71,6 +71,33 @@ RSpec.describe SmartKv do
       expect(config_2.and_another).to eq "value again"
     end
 
+    context "when required given duplicate keys" do
+      before do
+        if defined? AnotherConfig
+          AnotherConstantExtremelyUnlikelyToConflict = AnotherConfig
+          Object.send(:remove_const, :AnotherConfig)
+        end
+
+        class AnotherConfig < SmartKv
+          required :duplicate, :duplicate
+          optional :also_duplicate, :also_duplicate
+        end
+      end
+
+      after do
+        Object.send(:remove_const, :AnotherConfig)
+        if defined? AnotherConstantExtremelyUnlikelyToConflict
+          AnotherConfig = AnotherConstantExtremelyUnlikelyToConflict
+          Object.send(:remove_const, :AnotherConstantExtremelyUnlikelyToConflict)
+        end
+      end
+
+      it "registers only the first key as required or optional" do
+        expect(AnotherConfig.required_keys).to eq [:duplicate]
+        expect(AnotherConfig.optional_keys).to eq [:also_duplicate]
+      end
+    end
+
     context "when given a Struct as input" do
       before do
         if defined? ConfigStruct

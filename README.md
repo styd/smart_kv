@@ -1,5 +1,7 @@
 # SmartKv
 
+[![Build Status](https://travis-ci.org/styd/smart_kv.svg?branch=master)](https://travis-ci.org/styd/smart_kv)
+
 Best practice of writing configurations by strictly allowing and requiring keys.
 
 It doesn't have to be a configuration.

@@ -57,6 +57,20 @@ c2 = Config.new(OpenStruct.new({some_key: "val", second_key: "val 2"}))
 c2.second_key
 ```
 
+### Override callable object
+
+You can change the callable object to any class that accepts hash as input of its new class method.
+
+```ruby
+class Convertable < SmartKv
+  required :abcd
+  callable_as OpenStruct
+end
+
+c = Convertable.new({abcd: 123})
+c.abcd #=> 123
+```
+
 ### Not using it for config
 
 You can choose not to use it for config. Maybe for strict request body keys?
@@ -73,7 +87,7 @@ request.set_form_data(PostBody.new({app_key: "abc", secret_key: "def"}))
 ## Coming Soon
 
 - [ ] Make it serializable
-- [ ] Convertable from hash (as input) to OpenStruct (the resulting object) or another object and vice versa
+- [X] Convertable from hash (as input) to OpenStruct (the resulting object) or another object and vice versa
 - [ ] Accept config file (e.g. `json`, `yaml`, etc.) or file path as input
 - [ ] Support nested/deep key value object as input
 - [ ] Make some nested keys from the same parent key required and some others optional

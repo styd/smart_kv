@@ -1,15 +1,20 @@
 require "smart_kv/version"
 require "smart_kv/register"
+require "smart_kv/macro"
 
 SmartKvInitializationError = Class.new(StandardError)
 
 class SmartKv
   extend Register
+  extend Macro
 
-  def initialize(required_keys = [], optional_keys = [], kv = {})
+  attr_reader :object_class
+
+  def initialize(required_keys = [], optional_keys = [], object_class = nil, kv = {})
     prevent_direct_instantiation
 
-    @kv = kv
+    @object_class = object_class || kv.class
+    @kv = kv.dup
     hash = kv.to_h.dup
 
     missing_keys = required_keys - hash.keys
@@ -24,7 +29,8 @@ class SmartKv
   end
 
   def method_missing(m, *args)
-    @kv.send(m, *args)
+    @object ||= @object_class <= Hash ? @kv : @object_class.new(@kv)
+    @object.send(m, *args)
   end 
 
 protected

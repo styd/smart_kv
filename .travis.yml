@@ -6,5 +6,4 @@ rvm:
   - 2.3.8
   - 2.4.5
   - 2.5.3
-  - rbx-3.107
 before_install: gem install bundler -v 1.17.2

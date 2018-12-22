@@ -1,9 +1,17 @@
 require_relative 'spec_helper'
 
-def safely_swap_constant(original_contstant_str, replacement_constant_str)
+def safely_swap_constant(original_constant_str)
   if (klass = Object.const_get(original_constant_str) rescue nil)
-    Object.const_set(replacement_constant_str, klass)
+    Object.const_set("AVeryLongConstantToStore#{ original_constant_str }", klass)
     Object.send(:remove_const, original_constant_str.to_sym)
+  end
+end
+
+def safely_swap_back_constant(original_constant_str)
+  Object.send(:remove_const, original_constant_str.to_sym)
+  if (klass = Object.const_get("AVeryLongConstantToStore#{ original_constant_str }") rescue nil)
+    Object.const_set(original_constant_str, klass)
+    Object.send(:remove_const, "AVeryLongConstantToStore#{ original_constant_str }".to_sym)
   end
 end
 
@@ -16,7 +24,7 @@ RSpec.describe SmartKv do
 
   context "Subclass of SmartKv" do
     before(:all) do
-      safely_swap_constant("ModelConfig", "AnExtremelyUniqueConstantThatShouldNotExist")
+      safely_swap_constant("ModelConfig")
 
       class ModelConfig < described_class
         required :a_key, :another_key, :and_another
@@ -24,8 +32,7 @@ RSpec.describe SmartKv do
     end
 
     after(:all) do
-      Object.send(:remove_const, :ModelConfig)
-      safely_swap_constant("AnExtremelyUniqueConstantThatShouldNotExist", "ModelConfig")
+      safely_swap_back_constant("ModelConfig")
     end
 
     it "checks whether there are missing required keys" do
@@ -74,30 +81,91 @@ RSpec.describe SmartKv do
 
     context "set callable_as to any class that accepts hash as input" do
       before do
-        safely_swap_constant("ConvertableConfig", "ALongUniqueConstantThatShouldNotExist")
+        safely_swap_constant("ConvertableConfig")
 
         class ConvertableConfig < described_class
           required :some_key
-          callable_as OpenStruct
         end
       end
 
       after do
-        Object.send(:remove_const, :ConvertableConfig)
-        safely_swap_constant("ALongUniqueConstantThatShouldNotExist", "ConvertableConfig")
+        safely_swap_back_constant("ConvertableConfig")
       end
 
-      it "the instance will be callable as the object set" do
-        config = ConvertableConfig.new({some_key: "value"})
-        expect { config.some_key }.not_to raise_error
-        expect(config.some_key).to eq "value"
-        expect(config.object_class).to eq OpenStruct
+      context "OpenStruct" do
+        before do
+          class ConvertableConfig < described_class
+            callable_as OpenStruct
+          end
+        end
+
+        it "the instance will be callable as OpenStruct" do
+          config = ConvertableConfig.new({some_key: "value"})
+          expect { config.some_key }.not_to raise_error
+          expect(config.some_key).to eq "value"
+          expect(config.object_class).to eq OpenStruct
+        end
+      end
+
+      context "Struct" do
+        before do
+          class ConvertableConfig < described_class
+            callable_as Struct
+          end
+        end
+
+        it "the instance will be callable as instance of Struct" do
+          config = ConvertableConfig.new({some_key: "value"})
+          expect { config.some_key }.not_to raise_error
+          expect(config.some_key).to eq "value"
+          expect(config.members).to eq [:some_key]
+          expect(config.object_class).to eq Struct
+        end
+      end
+
+      context "Instance of Struct" do
+        before do
+          safely_swap_constant("KeyStorage")
+
+          KeyStorage = Struct.new(:some_key)
+          class ConvertableConfig < described_class
+            callable_as KeyStorage
+          end
+        end
+
+        after do
+          safely_swap_back_constant("KeyStorage")
+        end
+
+        it "the instance will be callable as instance of Struct" do
+          config = ConvertableConfig.new({some_key: "value"})
+          expect { config.some_key }.not_to raise_error
+          expect(config.some_key).to eq "value"
+          expect(config.members).to eq [:some_key]
+          expect(config.object_class.class).to eq Class
+        end
+      end
+
+      context "Hash" do
+        before do
+          class ConvertableConfig < described_class
+            callable_as Hash
+          end
+        end
+
+        it "the instance will be callable as hash" do
+          ConfigKv = Struct.new(:some_key)
+          config = ConvertableConfig.new(ConfigKv.new("value"))
+          expect { config[:some_key] }.not_to raise_error
+          expect(config[:some_key]).to eq "value"
+          expect(config.object_class).to eq Hash
+        end
       end
     end
 
     context "when required given duplicate keys" do
       before do
-        safely_swap_constant("AnotherConfig", "AnotherConstantExtremelyUnlikelyToConflict")
+        safely_swap_constant("AnotherConfig")
 
         class AnotherConfig < described_class
           required :duplicate, :duplicate
@@ -106,8 +174,7 @@ RSpec.describe SmartKv do
       end
 
       after do
-        Object.send(:remove_const, :AnotherConfig)
-        safely_swap_constant("AnotherConstantExtremelyUnlikelyToConflict", "AnotherConfig")
+        safely_swap_back_constant("AnotherConfig")
       end
 
       it "registers only the first key as required or optional" do
@@ -118,14 +185,13 @@ RSpec.describe SmartKv do
 
     context "when given a Struct as input" do
       before do
-        safely_swap_constant("ConfigStruct", "AnotherExtremelyUniqueConstantThatShouldNotExist")
+        safely_swap_constant("ConfigStruct")
 
         ConfigStruct = Struct.new(:a_key, :another_key, :and_another)
       end
 
       after do
-        Object.send(:remove_const, :ConfigStruct)
-        safely_swap_constant("AnotherExtremelyUniqueConstantThatShouldNotExist", "ConfigStruct")
+        safely_swap_back_constant("ConfigStruct")
       end
 
       it "accepts the input" do
@@ -190,8 +256,8 @@ RSpec.describe SmartKv do
 
   context "Subclass of Subclass of SmartConfig" do
     before(:all) do
-      safely_swap_constant("ChildConfig", "AnotherSuperUniqueConstant")
-      safely_swap_constant("GrandChildConfig", "ChildOfAnotherSuperUniqueConstant")
+      safely_swap_constant("ChildConfig")
+      safely_swap_constant("GrandChildConfig")
 
       class ChildConfig < described_class
         required :a_key, :b_key
@@ -203,11 +269,8 @@ RSpec.describe SmartKv do
     end
 
     after(:all) do
-      Object.send(:remove_const, :ChildConfig)
-      safely_swap_constant("AnotherSuperUniqueConstant", "ChildConfig")
-
-      Object.send(:remove_const, :GrandChildConfig)
-      safely_swap_constant("ChildOfAnotherSuperUniqueConstant", "GrandChildConfig")
+      safely_swap_back_constant("ChildConfig")
+      safely_swap_back_constant("GrandChildConfig")
     end
 
     it "inherits the 'required' keys from its parent" do

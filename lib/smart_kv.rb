@@ -29,9 +29,18 @@ class SmartKv
   end
 
   def method_missing(m, *args)
-    @object ||= @object_class <= Hash ? @kv : @object_class.new(@kv)
+    @object ||= if @object_class <= Struct
+                  Struct.new(*@kv.keys).new(*@kv.values)
+                elsif @object_class.respond_to?(:members)
+                  raise "#{ @object_class } struct members don't match" unless (@object_class.members - @kv.keys).empty?
+                  @object_class.new(*@kv.values)
+                elsif @object_class <= Hash
+                  @kv
+                else
+                  @object_class.new(@kv.to_h)
+                end
     @object.send(m, *args)
-  end 
+  end
 
 protected
 

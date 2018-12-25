@@ -15,8 +15,12 @@ class SmartKv
 
     @object_class = object_class || kv.class
     @kv = kv.dup
-    hash = kv.to_h.dup
 
+    if @object_class.respond_to?(:members) && @object_class.members != @kv.to_h.keys
+      raise ArgumentError, "#{ @object_class } struct size differs"
+    end
+
+    hash = kv.to_h.dup
     missing_keys = required_keys - hash.keys
     unless missing_keys.empty?
       raise KeyError, "missing required key(s): #{missing_keys.map{|k| "`:#{k}'" }.join(', ')} in #{self.class}"
@@ -29,11 +33,10 @@ class SmartKv
   end
 
   def method_missing(m, *args)
-    @object ||= if @object_class <= Struct
-                  Struct.new(*@kv.keys).new(*@kv.values)
-                elsif @object_class.respond_to?(:members)
-                  raise "#{ @object_class } struct members don't match" unless (@object_class.members - @kv.keys).empty?
-                  @object_class.new(*@kv.values)
+    @object ||= if @object_class == Struct
+                  Struct.new(*@kv.to_h.keys).new(*@kv.to_h.values)
+                elsif @object_class < Struct
+                  @object_class.new(*@kv.to_h.values)
                 elsif @object_class <= Hash
                   @kv
                 else

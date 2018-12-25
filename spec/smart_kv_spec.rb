@@ -1,21 +1,20 @@
 require_relative 'spec_helper'
 
-def safely_swap_constant(original_constant_str)
-  if (klass = Object.const_get(original_constant_str) rescue nil)
-    Object.const_set("AVeryLongConstantToStore#{ original_constant_str }", klass)
-    Object.send(:remove_const, original_constant_str.to_sym)
-  end
-end
-
-def safely_swap_back_constant(original_constant_str)
-  Object.send(:remove_const, original_constant_str.to_sym)
-  if (klass = Object.const_get("AVeryLongConstantToStore#{ original_constant_str }") rescue nil)
-    Object.const_set(original_constant_str, klass)
-    Object.send(:remove_const, "AVeryLongConstantToStore#{ original_constant_str }".to_sym)
-  end
-end
-
 RSpec.describe SmartKv do
+  before(:all) do
+    safely_swap_all_constants(%w(
+      ModelConfig ConvertableConfig KeyStorage StructKv OstructKv AnotherConfig
+      ConfigStruct ChildConfig GrandChildConfig StructKey
+    ))
+  end
+
+  after(:all) do
+    safely_swap_back_all_constants(%w(
+      ModelConfig ConvertableConfig KeyStorage StructKv OstructKv AnotherConfig
+      ConfigStruct ChildConfig GrandChildConfig StructKey
+    ))
+  end
+
   it "cannot be instantiated" do
     expect {
       described_class.new({})
@@ -24,15 +23,9 @@ RSpec.describe SmartKv do
 
   context "Subclass of SmartKv" do
     before(:all) do
-      safely_swap_constant("ModelConfig")
-
       class ModelConfig < described_class
         required :a_key, :another_key, :and_another
       end
-    end
-
-    after(:all) do
-      safely_swap_back_constant("ModelConfig")
     end
 
     it "checks whether there are missing required keys" do
@@ -80,101 +73,159 @@ RSpec.describe SmartKv do
     end
 
     context "set callable_as to any class that accepts hash as input" do
-      before do
-        safely_swap_constant("ConvertableConfig")
-
+      before(:all) do
         class ConvertableConfig < described_class
           required :some_key
         end
       end
 
-      after do
-        safely_swap_back_constant("ConvertableConfig")
-      end
+      context "when input is a Hash" do
+        context "and callable_as is set to OpenStruct" do
+          before do
+            class ConvertableConfig
+              callable_as OpenStruct
+            end
+          end
 
-      context "OpenStruct" do
-        before do
-          class ConvertableConfig < described_class
-            callable_as OpenStruct
+          it "the instance will be callable as OpenStruct" do
+            config = ConvertableConfig.new({some_key: "value"})
+            expect { config.some_key }.not_to raise_error
+            expect(config.some_key).to eq "value"
+            expect(config.object_class).to eq OpenStruct
           end
         end
 
-        it "the instance will be callable as OpenStruct" do
-          config = ConvertableConfig.new({some_key: "value"})
-          expect { config.some_key }.not_to raise_error
-          expect(config.some_key).to eq "value"
-          expect(config.object_class).to eq OpenStruct
-        end
-      end
+        context "and callable_as is set to Struct" do
+          before do
+            class ConvertableConfig
+              callable_as Struct
+            end
+          end
 
-      context "Struct" do
-        before do
-          class ConvertableConfig < described_class
-            callable_as Struct
+          it "the instance will be callable as instance of Struct" do
+            config = ConvertableConfig.new({some_key: "value"})
+            expect { config.some_key }.not_to raise_error
+            expect(config.some_key).to eq "value"
+            expect(config.members).to eq [:some_key]
+            expect(config.object_class).to eq Struct
           end
         end
 
-        it "the instance will be callable as instance of Struct" do
-          config = ConvertableConfig.new({some_key: "value"})
-          expect { config.some_key }.not_to raise_error
-          expect(config.some_key).to eq "value"
-          expect(config.members).to eq [:some_key]
-          expect(config.object_class).to eq Struct
+        context "and callable_as is set to Instance of Struct" do
+          before do
+            StructKey = Struct.new(:some_key)
+            class ConvertableConfig
+              callable_as StructKey
+            end
+          end
+
+          it "the instance will be callable as instance of Struct" do
+            config = ConvertableConfig.new({some_key: "value"})
+            expect { config.some_key }.not_to raise_error
+            expect(config.some_key).to eq "value"
+            expect(config.members).to eq [:some_key]
+            expect(config.object_class).to eq StructKey
+          end
         end
       end
 
-      context "Instance of Struct" do
-        before do
-          safely_swap_constant("KeyStorage")
+      context "when input is an instance of Struct" do
+        before(:all) do
+          StructKv = Struct.new(:some_key)
+        end
 
-          KeyStorage = Struct.new(:some_key)
-          class ConvertableConfig < described_class
-            callable_as KeyStorage
+        context "and callable_as is set to Hash" do
+          before do
+            class ConvertableConfig
+              callable_as Hash
+            end
+          end
+
+          it "the instance will be callable as hash" do
+            config = ConvertableConfig.new(StructKv.new("value"))
+            expect { config[:some_key] }.not_to raise_error
+            expect(config[:some_key]).to eq "value"
+            expect(config.object_class).to eq Hash
           end
         end
 
-        after do
-          safely_swap_back_constant("KeyStorage")
-        end
+        context "and callable_as is set to OpenStruct" do
+          before do
+            class ConvertableConfig
+              callable_as OpenStruct
+            end
+          end
 
-        it "the instance will be callable as instance of Struct" do
-          config = ConvertableConfig.new({some_key: "value"})
-          expect { config.some_key }.not_to raise_error
-          expect(config.some_key).to eq "value"
-          expect(config.members).to eq [:some_key]
-          expect(config.object_class.class).to eq Class
+          it "the instance will be callable as OpenStruct" do
+            config = ConvertableConfig.new(StructKv.new("value"))
+            expect { config.some_key }.not_to raise_error
+            expect(config.some_key).to eq "value"
+            expect(config.object_class).to eq OpenStruct
+          end
         end
       end
 
-      context "Hash" do
-        before do
-          class ConvertableConfig < described_class
-            callable_as Hash
+      context "when input is an OpenStruct" do
+        before(:all) do
+          OstructKv = OpenStruct.new(some_key: "value")
+        end
+
+        context "and callable_as is set to Hash" do
+          before do
+            class ConvertableConfig
+              callable_as Hash
+            end
+          end
+
+          it "the instance will be callable as hash" do
+            config = ConvertableConfig.new(OstructKv)
+            expect { config[:some_key] }.not_to raise_error
+            expect(config[:some_key]).to eq "value"
+            expect(config.object_class).to eq Hash
           end
         end
 
-        it "the instance will be callable as hash" do
-          ConfigKv = Struct.new(:some_key)
-          config = ConvertableConfig.new(ConfigKv.new("value"))
-          expect { config[:some_key] }.not_to raise_error
-          expect(config[:some_key]).to eq "value"
-          expect(config.object_class).to eq Hash
+        context "and callable_as is set to Struct" do
+          before do
+            class ConvertableConfig
+              callable_as Struct
+            end
+          end
+
+          it "the instance will be callable as instance of Struct" do
+            config = ConvertableConfig.new(OstructKv)
+            expect { config.some_key }.not_to raise_error
+            expect(config.some_key).to eq "value"
+            expect(config.members).to eq [:some_key]
+            expect(config.object_class).to eq Struct
+          end
+        end
+
+        context "and callable_as is set to Instance of Struct" do
+          before do
+            KeyStorage = Struct.new(:some_key)
+            class ConvertableConfig
+              callable_as KeyStorage
+            end
+          end
+
+          it "the instance will be callable as instance of Struct" do
+            config = ConvertableConfig.new(OstructKv)
+            expect { config.some_key }.not_to raise_error
+            expect(config.some_key).to eq "value"
+            expect(config.members).to eq [:some_key]
+            expect(config.object_class).to eq KeyStorage
+          end
         end
       end
     end
 
     context "when required given duplicate keys" do
       before do
-        safely_swap_constant("AnotherConfig")
-
         class AnotherConfig < described_class
           required :duplicate, :duplicate
           optional :also_duplicate, :also_duplicate
         end
-      end
-
-      after do
-        safely_swap_back_constant("AnotherConfig")
       end
 
       it "registers only the first key as required or optional" do
@@ -185,13 +236,7 @@ RSpec.describe SmartKv do
 
     context "when given a Struct as input" do
       before do
-        safely_swap_constant("ConfigStruct")
-
         ConfigStruct = Struct.new(:a_key, :another_key, :and_another)
-      end
-
-      after do
-        safely_swap_back_constant("ConfigStruct")
       end
 
       it "accepts the input" do
@@ -256,9 +301,6 @@ RSpec.describe SmartKv do
 
   context "Subclass of Subclass of SmartConfig" do
     before(:all) do
-      safely_swap_constant("ChildConfig")
-      safely_swap_constant("GrandChildConfig")
-
       class ChildConfig < described_class
         required :a_key, :b_key
       end
@@ -266,11 +308,6 @@ RSpec.describe SmartKv do
       class GrandChildConfig < ChildConfig
         required :c_key, :d_key
       end
-    end
-
-    after(:all) do
-      safely_swap_back_constant("ChildConfig")
-      safely_swap_back_constant("GrandChildConfig")
     end
 
     it "inherits the 'required' keys from its parent" do

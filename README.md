@@ -33,7 +33,8 @@ Config.new({some_key: "val"})
 ```
 
 This will complain that you're not using the `:second key`.
-Guess what the `optional` do!
+If you add another key that is not recognized, it will complain too.
+If there is a key that you don't always use but want it to be recognized, mark it as `optional`.
 
 ### Inheritable
 
@@ -73,7 +74,7 @@ c = Convertable.new({abcd: 123})
 c.abcd #=> 123
 ```
 
-### Not using it for config
+### Not using it for config?
 
 You can choose not to use it for config. Maybe for strict request body keys?
 
@@ -88,7 +89,6 @@ request.set_form_data(PostBody.new({app_key: "abc", secret_key: "def"}))
 
 ## Coming Soon
 
-- [ ] Make it serializable
 - [X] Convertable from hash (as input) to OpenStruct (the resulting object) or another object and vice versa
 - [ ] Accept config file (e.g. `json`, `yaml`, etc.) or file path as input
 - [ ] Support nested/deep key value object as input

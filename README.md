@@ -1,6 +1,8 @@
 # SmartKv
 
 [![Build Status](https://travis-ci.org/styd/smart_kv.svg?branch=master)](https://travis-ci.org/styd/smart_kv)
+[![Coverage Status](https://coveralls.io/repos/github/styd/smart_kv/badge.svg?branch=master)](https://coveralls.io/github/styd/smart_kv?branch=master)
+[![Gem Version](https://badge.fury.io/rb/smart_kv.svg)](https://rubygems.org/gems/smart_kv)
 
 Best practice of writing configurations by strictly allowing and requiring keys.
 

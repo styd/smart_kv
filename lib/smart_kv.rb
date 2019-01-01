@@ -14,10 +14,6 @@ class SmartKv
     @object_class = object_class || kv.class
     @kv = kv.dup
 
-    if @object_class.respond_to?(:members) && @object_class.members != @kv.to_h.keys
-      raise ArgumentError, "#{ @object_class } struct size differs"
-    end
-
     hash = kv.to_h.dup
     missing_keys = required_keys - hash.keys
     unless missing_keys.empty?

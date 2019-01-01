@@ -1,12 +1,10 @@
 require "smart_kv/version"
 require "smart_kv/register"
-require "smart_kv/macro"
 
 SmartKvInitializationError = Class.new(StandardError)
 
 class SmartKv
   extend Register
-  extend Macro
 
   attr_reader :object_class
 

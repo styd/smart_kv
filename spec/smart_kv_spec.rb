@@ -79,6 +79,12 @@ RSpec.describe SmartKv do
         end
       end
 
+      context "when callable as is not set" do
+        it "callable class is nil" do
+          expect(ConvertableConfig.callable_class).to eq nil
+        end
+      end
+
       context "when input is a Hash" do
         context "and callable_as is set to OpenStruct" do
           before do
@@ -92,6 +98,7 @@ RSpec.describe SmartKv do
             expect { config.some_key }.not_to raise_error
             expect(config.some_key).to eq "value"
             expect(config.object_class).to eq OpenStruct
+            expect(ConvertableConfig.callable_class).to eq OpenStruct
           end
         end
 
@@ -108,6 +115,7 @@ RSpec.describe SmartKv do
             expect(config.some_key).to eq "value"
             expect(config.members).to eq [:some_key]
             expect(config.object_class).to eq Struct
+            expect(ConvertableConfig.callable_class).to eq Struct
           end
         end
 
@@ -125,6 +133,7 @@ RSpec.describe SmartKv do
             expect(config.some_key).to eq "value"
             expect(config.members).to eq [:some_key]
             expect(config.object_class).to eq StructKey
+            expect(ConvertableConfig.callable_class).to eq StructKey
           end
         end
       end
@@ -146,6 +155,7 @@ RSpec.describe SmartKv do
             expect { config[:some_key] }.not_to raise_error
             expect(config[:some_key]).to eq "value"
             expect(config.object_class).to eq Hash
+            expect(ConvertableConfig.callable_class).to eq Hash
           end
         end
 
@@ -161,6 +171,7 @@ RSpec.describe SmartKv do
             expect { config.some_key }.not_to raise_error
             expect(config.some_key).to eq "value"
             expect(config.object_class).to eq OpenStruct
+            expect(ConvertableConfig.callable_class).to eq OpenStruct
           end
         end
       end
@@ -182,6 +193,7 @@ RSpec.describe SmartKv do
             expect { config[:some_key] }.not_to raise_error
             expect(config[:some_key]).to eq "value"
             expect(config.object_class).to eq Hash
+            expect(ConvertableConfig.callable_class).to eq Hash
           end
         end
 
@@ -198,6 +210,7 @@ RSpec.describe SmartKv do
             expect(config.some_key).to eq "value"
             expect(config.members).to eq [:some_key]
             expect(config.object_class).to eq Struct
+            expect(ConvertableConfig.callable_class).to eq Struct
           end
         end
 
@@ -215,6 +228,7 @@ RSpec.describe SmartKv do
             expect(config.some_key).to eq "value"
             expect(config.members).to eq [:some_key]
             expect(config.object_class).to eq KeyStorage
+            expect(ConvertableConfig.callable_class).to eq KeyStorage
           end
         end
       end

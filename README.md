@@ -28,8 +28,10 @@ Eh? :confused:
 Why didn't it tell me if it was not recognized?  
 
 I wish that too.  
-But `Hash` has a default value of `nil` if key is not found (same thing applies to `OpenStruct`) - so, it will not raise error -
-and most developers won't bother checking each options' key made by the users of the library or method.  
+But `Hash` has a default value of `nil` if key is not found (same thing applies to `OpenStruct`). 
+So, it will fail gracefully even if an option is actually required, unless the developer uses `#fetch` instead of `#[]`.
+Even if the developer uses `#fetch` for required keys, it doesn't actually check if there are foreign keys input.
+Also, most developers won't bother checking each options' key made by the users of the library or method.
 
 If only the source of the `DateTime#change` method starts like this:
 

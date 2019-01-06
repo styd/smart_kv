@@ -2,6 +2,8 @@ module SmartKv::Register
   def required(*args)
     @required ||= superclass == SmartKv ? Set.new : superclass.required_keys.dup
     @required += args
+    @optional -= @required if @optional
+    @required
   end
 
   def required_keys
@@ -11,7 +13,7 @@ module SmartKv::Register
   def optional(*args)
     @optional ||= superclass == SmartKv ? Set.new : superclass.optional_keys.dup
     @optional += args
-    @required -= @optional
+    @required -= @optional if @required
     @optional
   end
 

@@ -234,7 +234,7 @@ RSpec.describe SmartKv do
       end
     end
 
-    context "when required given duplicate keys" do
+    context "when required and optional given duplicate keys" do
       before do
         class AnotherConfig < described_class
           required :duplicate, :duplicate
@@ -296,19 +296,41 @@ RSpec.describe SmartKv do
           })
         }.not_to raise_error
       end
+    end
+  end
 
-      context "when conflicting with existing required keys" do
-        before do
-          class ModelConfig
-            optional :a_key
-          end
+  context "conflicting keys" do
+    context "when a key made optional after required" do
+      before do
+        class RequiredToOptional < SmartKv
+          required :a_key
+          optional :a_key
         end
+      end
 
-        it "makes the keys no longer required but allowed (optional)" do
-          expect {
-            ModelConfig.new({another_key: "1", and_another: "2"})
-          }.not_to raise_error
+      it "makes the keys no longer required but allowed (optional)" do
+        expect {
+          RequiredToOptional.new
+        }.not_to raise_error
+        expect(RequiredToOptional.optional_keys).to eq [:a_key]
+        expect(RequiredToOptional.required_keys).to be_empty
+      end
+    end
+
+    context "when a key made optional after required" do
+      before do
+        class OptionalToRequired < SmartKv
+          optional :b_key
+          required :b_key
         end
+      end
+
+      it "makes the keys no longer required but allowed (optional)" do
+        expect {
+          OptionalToRequired.new
+        }.to raise_error(KeyError, /missing required key\(s\): `:b_key'/)
+        expect(OptionalToRequired.optional_keys).to be_empty
+        expect(OptionalToRequired.required_keys).to eq [:b_key]
       end
     end
   end

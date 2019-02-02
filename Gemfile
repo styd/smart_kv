@@ -5,6 +5,7 @@ git_source(:github) {|repo_name| "https://github.com/#{repo_name}" }
 group :development, :test do
   gem "pry", "~> 0.12"
   gem "pry-byebug", "~> 3.6"
+  gem "pry-doc"
 end
 
 group :test do

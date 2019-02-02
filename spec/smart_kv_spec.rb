@@ -1,4 +1,5 @@
 require_relative 'spec_helper'
+require 'pry'
 
 RSpec.describe SmartKv do
   before(:all) do
@@ -18,13 +19,14 @@ RSpec.describe SmartKv do
   it "cannot be instantiated" do
     expect {
       described_class.new({})
-    }.to raise_error(SmartKvInitializationError)
+    }.to raise_error(SmartKv::InitializationError)
   end
 
   context "Subclass of SmartKv" do
     before(:all) do
       class ModelConfig < described_class
         required :a_key, :another_key, :and_another
+        optional :b_key
       end
     end
 
@@ -33,7 +35,7 @@ RSpec.describe SmartKv do
         ModelConfig.new({
           a_key: "value", and_another: "value again"
         })
-      }.to raise_error(KeyError, /missing required key\(s\): `:another_key'/)
+      }.to raise_error(SmartKv::KeyError, /missing required key\(s\): :another_key/)
     end
 
     it "doesn't complain when all required keys are there" do
@@ -47,10 +49,10 @@ RSpec.describe SmartKv do
     it "checks whether keys that are not implemented exist" do
       expect {
         ModelConfig.new({
-          a_key: "value", second_key: "value again",
+          a_key: "value", c_key: "value again",
           another_key: "wow.. value", and_another: "excellent"
         })
-      }.to raise_error(NotImplementedError, /unrecognized key\(s\): `:second_key'/)
+      }.to raise_error(SmartKv::KeyError, /key not found: :c_key.*Did you mean\?/m)
     end
 
     it "can access the input value from the object" do
@@ -328,7 +330,7 @@ RSpec.describe SmartKv do
       it "makes the keys no longer required but allowed (optional)" do
         expect {
           OptionalToRequired.new
-        }.to raise_error(KeyError, /missing required key\(s\): `:b_key'/)
+        }.to raise_error(SmartKv::KeyError, /missing required key\(s\): :b_key/)
         expect(OptionalToRequired.optional_keys).to be_empty
         expect(OptionalToRequired.required_keys).to eq [:b_key]
       end

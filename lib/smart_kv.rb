@@ -1,10 +1,11 @@
-require "smart_kv/version"
-require "smart_kv/register"
-
-SmartKvInitializationError = Class.new(StandardError)
+require_relative "smart_kv/version"
+require_relative "smart_kv/register"
+require_relative "smart_kv/errors"
+require_relative "smart_kv/fetch_override"
 
 class SmartKv
   extend Register
+  using FetchOverride
 
   attr_reader :object_class
 
@@ -14,16 +15,21 @@ class SmartKv
     @object_class = object_class || kv.class
     @kv = kv.dup
 
-    hash = kv.to_h.dup
+    hash = kv.to_h
     missing_keys = required_keys - hash.keys
     unless missing_keys.empty?
-      raise KeyError, "missing required key(s): #{missing_keys.map{|k| "`:#{k}'" }.join(', ')} in #{self.class}"
+      raise KeyError, "missing required key(s): #{missing_keys.map{|k| k.to_sym.inspect }.join(', ')} in #{self.class}"
     end
 
     unrecognized_keys = hash.keys - required_keys - optional_keys
     unless unrecognized_keys.empty?
-      raise NotImplementedError, "unrecognized key(s): #{unrecognized_keys.map{|k| "`:#{k}'" }.join(', ')} in #{self.class}"
+      key = unrecognized_keys.first
+      hash.slice(*keys).fetch(key) # to raise KeyError
     end
+  end
+
+  def keys
+    Array(self.class.required) + Array(self.class.optional)
   end
 
   def method_missing(m, *args)
@@ -43,7 +49,7 @@ protected
 
   def prevent_direct_instantiation
     if self.class == SmartKv
-      raise SmartKvInitializationError, "only subclass of SmartConfig can be instantiated"
+      raise InitializationError, "only subclass of SmartConfig can be instantiated"
     end
   end
 end

@@ -147,7 +147,7 @@ And then execute:
 ## Coming Soon
 
 - [X] Convertable from hash (as input) to OpenStruct (the resulting object) or another object and vice versa
-- [ ] Suggests corrections for unrecognized keys using DidYouMean (and maybe change the spell checking threshold?)
+- [X] Suggests corrections for unrecognized keys using DidYouMean
 - [ ] Support nested/deep key value object as input
 - [ ] Make some nested keys from the same parent key required and some others optional
 - [ ] Accept config file (e.g. `json`, `yaml`, etc.) or file path as input

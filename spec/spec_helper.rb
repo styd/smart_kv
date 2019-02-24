@@ -25,29 +25,29 @@ end
 #
 # Maybe I'm overly cautious but better safe than sorry.
 #
-def safely_swap_constant(original_constant_str)
-  if (klass = Object.const_get(original_constant_str) rescue nil)
-    Object.const_set("AVeryLongConstantToStore#{ original_constant_str }", klass)
-    Object.send(:remove_const, original_constant_str.to_sym)
-  end
-end
-
-def safely_swap_back_constant(original_constant_str)
-  Object.send(:remove_const, original_constant_str.to_sym)
-  if (klass = Object.const_get("AVeryLongConstantToStore#{ original_constant_str }") rescue nil)
-    Object.const_set(original_constant_str, klass)
-    Object.send(:remove_const, "AVeryLongConstantToStore#{ original_constant_str }".to_sym)
-  end
-end
-
-def safely_swap_all_constants(array_of_constant_str)
-  array_of_constant_str.each do |original_constant_str|
-    safely_swap_constant(original_constant_str)
-  end
-end
-
-def safely_swap_back_all_constants(array_of_constant_str)
-  array_of_constant_str.each do |original_constant_str|
-    safely_swap_back_constant(original_constant_str)
-  end
-end
+# def safely_swap_constant(original_constant_str)
+#   if (klass = Object.const_get(original_constant_str) rescue nil)
+#     Object.const_set("AVeryLongConstantToStore#{ original_constant_str }", klass)
+#     Object.send(:remove_const, original_constant_str.to_sym)
+#   end
+# end
+#
+# def safely_swap_back_constant(original_constant_str)
+#   Object.send(:remove_const, original_constant_str.to_sym)
+#   if (klass = Object.const_get("AVeryLongConstantToStore#{ original_constant_str }") rescue nil)
+#     Object.const_set(original_constant_str, klass)
+#     Object.send(:remove_const, "AVeryLongConstantToStore#{ original_constant_str }".to_sym)
+#   end
+# end
+#
+# def safely_swap_all_constants(array_of_constant_str)
+#   array_of_constant_str.each do |original_constant_str|
+#     safely_swap_constant(original_constant_str)
+#   end
+# end
+#
+# def safely_swap_back_all_constants(array_of_constant_str)
+#   array_of_constant_str.each do |original_constant_str|
+#     safely_swap_back_constant(original_constant_str)
+#   end
+# end

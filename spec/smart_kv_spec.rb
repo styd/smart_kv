@@ -1,21 +1,6 @@
 require_relative 'spec_helper'
-require 'pry'
 
 RSpec.describe SmartKv do
-  before(:all) do
-    safely_swap_all_constants(%w(
-      ModelConfig ConvertableConfig KeyStorage StructKv OstructKv AnotherConfig
-      ConfigStruct ChildConfig GrandChildConfig StructKey
-    ))
-  end
-
-  after(:all) do
-    safely_swap_back_all_constants(%w(
-      ModelConfig ConvertableConfig KeyStorage StructKv OstructKv AnotherConfig
-      ConfigStruct ChildConfig GrandChildConfig StructKey
-    ))
-  end
-
   it "cannot be instantiated" do
     expect {
       described_class.new({})
@@ -47,12 +32,14 @@ RSpec.describe SmartKv do
     end
 
     it "checks whether keys that are not implemented exist" do
-      expect {
-        ModelConfig.new({
-          a_key: "value", c_key: "value again",
-          another_key: "wow.. value", and_another: "excellent"
-        })
-      }.to raise_error(SmartKv::KeyError, /key not found: :c_key.*Did you mean\?/m)
+      if has_did_you_mean_key_error?
+        expect {
+          ModelConfig.new({
+            a_key: "value", c_key: "value again",
+            another_key: "wow.. value", and_another: "excellent"
+          })
+        }.to raise_error(SmartKv::KeyError, /key not found: :c_key.*Did you mean\?/m)
+      end
     end
 
     it "can access the input value from the object" do

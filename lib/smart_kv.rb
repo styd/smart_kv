@@ -1,7 +1,14 @@
+def has_did_you_mean_key_error?
+  !ENV['TRAVIS'] && Gem::Version.new(RUBY_VERSION) > Gem::Version.new("2.5.0") && defined?(DidYouMean)
+end
+
 require_relative "smart_kv/version"
 require_relative "smart_kv/register"
 require_relative "smart_kv/errors"
-require_relative "smart_kv/did_you_mean" if defined?(DidYouMean)
+
+if has_did_you_mean_key_error?
+  require_relative "smart_kv/did_you_mean"
+end
 
 class SmartKv
   extend Register

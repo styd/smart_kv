@@ -35,7 +35,7 @@ RSpec.describe SmartKv do
         ModelConfig.new({
           a_key: "value", and_another: "value again"
         })
-      }.to raise_error(KeyError, /missing required key\(s\): :another_key/)
+      }.to raise_error(SmartKv::KeyError, /missing required key\(s\): :another_key/)
     end
 
     it "doesn't complain when all required keys are there" do
@@ -52,7 +52,7 @@ RSpec.describe SmartKv do
           a_key: "value", c_key: "value again",
           another_key: "wow.. value", and_another: "excellent"
         })
-      }.to raise_error(KeyError, /key not found: :c_key.*Did you mean\?/m)
+      }.to raise_error(SmartKv::KeyError, /key not found: :c_key.*Did you mean\?/m)
     end
 
     it "can access the input value from the object" do
@@ -330,7 +330,7 @@ RSpec.describe SmartKv do
       it "makes the keys no longer required but allowed (optional)" do
         expect {
           OptionalToRequired.new
-        }.to raise_error(KeyError, /missing required key\(s\): :b_key/)
+        }.to raise_error(SmartKv::KeyError, /missing required key\(s\): :b_key/)
         expect(OptionalToRequired.optional_keys).to be_empty
         expect(OptionalToRequired.required_keys).to eq [:b_key]
       end

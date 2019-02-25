@@ -1,7 +1,7 @@
 class SmartKv
   InitializationError = Class.new(StandardError)
 
-  class KeyError < ::StandardError
+  class KeyError < ::KeyError
     attr_reader :key, :receiver
 
     def initialize(message, key: nil, receiver: {})

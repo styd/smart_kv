@@ -31,7 +31,7 @@ RSpec.describe SmartKv do
       }.not_to raise_error
     end
 
-    it "checks whether keys that are not implemented exist", if: has_did_you_mean_key_error? do
+    it "checks whether keys that are not implemented exist", if: SmartKv::Check.has_did_you_mean_key_error? do
       expect {
         ModelConfig.new({
           a_key: "value", c_key: "value again",

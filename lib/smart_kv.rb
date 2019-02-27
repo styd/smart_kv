@@ -16,8 +16,6 @@ class SmartKv
   attr_reader :object_class
 
   def initialize(required_keys = [], optional_keys = [], object_class = nil, kv = {})
-    prevent_direct_instantiation
-
     @object_class = object_class || kv.class
     @kv = kv.dup
 
@@ -49,13 +47,5 @@ class SmartKv
                   @object_class.new(@kv.to_h)
                 end
     @object.send(m, *args)
-  end
-
-protected
-
-  def prevent_direct_instantiation
-    if self.class == SmartKv
-      raise InitializationError, "only subclass of SmartConfig can be instantiated"
-    end
   end
 end

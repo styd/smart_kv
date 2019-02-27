@@ -22,6 +22,8 @@ module SmartKv::Register
   end
 
   def new(*args)
+    prevent_direct_instantiation
+
     super(@required.to_a, @optional.to_a, @callable_as, *args)
   end
 
@@ -31,5 +33,11 @@ module SmartKv::Register
 
   def callable_class
     @callable_as
+  end
+
+  def prevent_direct_instantiation
+    if self == SmartKv
+      raise SmartKv::InitializationError, "only subclass of SmartConfig can be instantiated".freeze
+    end
   end
 end

@@ -295,7 +295,7 @@ RSpec.describe SmartKv do
         end
       end
 
-      it "makes the keys no longer required but allowed (optional)" do
+      it "makes the key no longer required but allowed (optional)" do
         expect {
           RequiredToOptional.new
         }.not_to raise_error
@@ -304,7 +304,7 @@ RSpec.describe SmartKv do
       end
     end
 
-    context "when a key made optional after required" do
+    context "when a key made required after optional" do
       before do
         class OptionalToRequired < SmartKv
           optional :b_key
@@ -312,12 +312,103 @@ RSpec.describe SmartKv do
         end
       end
 
-      it "makes the keys no longer required but allowed (optional)" do
+      it "makes the key no longer optional but required" do
         expect {
           OptionalToRequired.new
         }.to raise_error(SmartKv::KeyError, /missing required key\(s\): :b_key/)
         expect(OptionalToRequired.optional_keys).to be_empty
         expect(OptionalToRequired.required_keys).to eq [:b_key]
+      end
+    end
+
+    context 'running on production' do
+      before do
+        class Conf < SmartKv
+          required :a, :b, :c
+          optional :d, :e
+        end
+      end
+
+      context 'rails app' do
+        before do
+          ENV['RAILS_ENV'] = 'production'
+        end
+
+        after do
+          ENV['RAILS_ENV'] = nil
+        end
+
+        context 'when object_class is Hash' do
+          before do
+            class Conf
+              callable_as Hash
+            end
+          end
+
+          it "doesn't do strict checking and returns a hash" do
+            input_hash = {a: 1, b: 2, f: 6}
+            input_ostruct = OpenStruct.new(input_hash)
+            expect(Conf.callable_class).to eq Hash
+            expect(Conf.new(input_ostruct)).to eq input_hash
+          end
+        end
+
+        context 'when object_class is OpenStruct' do
+          before do
+            class Conf
+              callable_as OpenStruct
+            end
+          end
+
+          it "doesn't do strict checking and returns an OpenStruct object" do
+            input_hash = {a: 1, b: 2, f: 6}
+            input_ostruct = OpenStruct.new(input_hash)
+            expect(Conf.callable_class).to eq OpenStruct
+            expect{ Conf.new(input_hash) }.not_to raise_error
+            expect(Conf.new(input_hash)).to eq input_ostruct
+          end
+        end
+      end
+
+      context 'rack app' do
+        before do
+          ENV['RACK_ENV'] = 'production'
+        end
+
+        after do
+          ENV['RACK_ENV'] = nil
+        end
+
+        context 'when object_class is Hash' do
+          before do
+            class Conf
+              callable_as Hash
+            end
+          end
+
+          it "doesn't do strict checking and returns a hash" do
+            input_hash = {a: 1, b: 2, f: 6}
+            input_ostruct = OpenStruct.new(input_hash)
+            expect(Conf.callable_class).to eq Hash
+            expect{ Conf.new(input_ostruct) }.not_to raise_error
+            expect(Conf.new(input_ostruct)).to eq input_hash
+          end
+        end
+
+        context 'when object_class is OpenStruct' do
+          before do
+            class Conf
+              callable_as OpenStruct
+            end
+          end
+
+          it "doesn't do strict checking and returns an OpenStruct object" do
+            input_hash = {a: 1, b: 2, f: 6}
+            input_ostruct = OpenStruct.new(input_hash)
+            expect(Conf.callable_class).to eq OpenStruct
+            expect(Conf.new(input_hash)).to eq input_ostruct
+          end
+        end
       end
     end
   end

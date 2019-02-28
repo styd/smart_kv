@@ -2,6 +2,7 @@ require_relative "smart_kv/version"
 require_relative "smart_kv/register"
 require_relative "smart_kv/errors"
 require_relative "smart_kv/check"
+require_relative "smart_kv/convert"
 
 class SmartKv
   if Check.has_did_you_mean_key_error?
@@ -34,15 +35,7 @@ class SmartKv
   end
 
   def method_missing(m, *args)
-    @object ||= if @object_class == Struct
-                  Struct.new(*@kv.to_h.keys).new(*@kv.to_h.values)
-                elsif @object_class < Struct
-                  @object_class.new(*@kv.to_h.values)
-                elsif @object_class <= Hash
-                  @kv
-                else
-                  @object_class.new(@kv.to_h)
-                end
+    @object ||= Convert.to_callable_object(@object_class, @kv)
     @object.send(m, *args)
   end
 end

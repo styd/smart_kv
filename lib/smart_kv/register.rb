@@ -24,7 +24,11 @@ module SmartKv::Register
   def new(*args)
     prevent_direct_instantiation
 
-    super(@required.to_a, @optional.to_a, @callable_as, *args)
+    if SmartKv::Check.production?
+      SmartKv::Convert.to_callable_object(callable_class, args.shift)
+    else
+      super(@required.to_a, @optional.to_a, callable_class, *args)
+    end
   end
 
   def callable_as(klass)

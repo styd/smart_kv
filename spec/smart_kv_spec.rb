@@ -3,13 +3,13 @@ require_relative 'spec_helper'
 RSpec.describe SmartKv do
   it "cannot be instantiated" do
     expect {
-      described_class.new({})
+      SmartKv.new({})
     }.to raise_error(SmartKv::InitializationError)
   end
 
   context "Subclass of SmartKv" do
     before(:all) do
-      class ModelConfig < described_class
+      class ModelConfig < SmartKv
         required :a_key, :another_key, :and_another
         optional :b_key
       end
@@ -61,7 +61,7 @@ RSpec.describe SmartKv do
 
     context "set callable_as to any class that accepts hash as input" do
       before(:all) do
-        class ConvertableConfig < described_class
+        class ConvertableConfig < SmartKv
           required :some_key
         end
       end
@@ -84,7 +84,6 @@ RSpec.describe SmartKv do
             config = ConvertableConfig.new({some_key: "value"})
             expect { config.some_key }.not_to raise_error
             expect(config.some_key).to eq "value"
-            expect(config.object_class).to eq OpenStruct
             expect(ConvertableConfig.callable_class).to eq OpenStruct
           end
         end
@@ -101,7 +100,6 @@ RSpec.describe SmartKv do
             expect { config.some_key }.not_to raise_error
             expect(config.some_key).to eq "value"
             expect(config.members).to eq [:some_key]
-            expect(config.object_class).to eq Struct
             expect(ConvertableConfig.callable_class).to eq Struct
           end
         end
@@ -119,7 +117,6 @@ RSpec.describe SmartKv do
             expect { config.some_key }.not_to raise_error
             expect(config.some_key).to eq "value"
             expect(config.members).to eq [:some_key]
-            expect(config.object_class).to eq StructKey
             expect(ConvertableConfig.callable_class).to eq StructKey
           end
         end
@@ -141,7 +138,6 @@ RSpec.describe SmartKv do
             config = ConvertableConfig.new(StructKv.new("value"))
             expect { config[:some_key] }.not_to raise_error
             expect(config[:some_key]).to eq "value"
-            expect(config.object_class).to eq Hash
             expect(ConvertableConfig.callable_class).to eq Hash
           end
         end
@@ -157,7 +153,6 @@ RSpec.describe SmartKv do
             config = ConvertableConfig.new(StructKv.new("value"))
             expect { config.some_key }.not_to raise_error
             expect(config.some_key).to eq "value"
-            expect(config.object_class).to eq OpenStruct
             expect(ConvertableConfig.callable_class).to eq OpenStruct
           end
         end
@@ -179,7 +174,6 @@ RSpec.describe SmartKv do
             config = ConvertableConfig.new(OstructKv)
             expect { config[:some_key] }.not_to raise_error
             expect(config[:some_key]).to eq "value"
-            expect(config.object_class).to eq Hash
             expect(ConvertableConfig.callable_class).to eq Hash
           end
         end
@@ -196,7 +190,6 @@ RSpec.describe SmartKv do
             expect { config.some_key }.not_to raise_error
             expect(config.some_key).to eq "value"
             expect(config.members).to eq [:some_key]
-            expect(config.object_class).to eq Struct
             expect(ConvertableConfig.callable_class).to eq Struct
           end
         end
@@ -214,7 +207,6 @@ RSpec.describe SmartKv do
             expect { config.some_key }.not_to raise_error
             expect(config.some_key).to eq "value"
             expect(config.members).to eq [:some_key]
-            expect(config.object_class).to eq KeyStorage
             expect(ConvertableConfig.callable_class).to eq KeyStorage
           end
         end
@@ -223,7 +215,7 @@ RSpec.describe SmartKv do
 
     context "when required and optional given duplicate keys" do
       before do
-        class AnotherConfig < described_class
+        class AnotherConfig < SmartKv
           required :duplicate, :duplicate
           optional :also_duplicate, :also_duplicate
         end
@@ -339,7 +331,7 @@ RSpec.describe SmartKv do
         ENV['RAILS_ENV'] = nil
       end
 
-      context 'when object_class is Hash' do
+      context 'when callable_class is Hash' do
         before do
           class Conf
             callable_as Hash
@@ -354,7 +346,7 @@ RSpec.describe SmartKv do
         end
       end
 
-      context 'when object_class is OpenStruct' do
+      context 'when callable_class is OpenStruct' do
         before do
           class Conf
             callable_as OpenStruct
@@ -380,7 +372,7 @@ RSpec.describe SmartKv do
         ENV['RACK_ENV'] = nil
       end
 
-      context 'when object_class is Hash' do
+      context 'when callable_class is Hash' do
         before do
           class Conf
             callable_as Hash
@@ -396,7 +388,7 @@ RSpec.describe SmartKv do
         end
       end
 
-      context 'when object_class is OpenStruct' do
+      context 'when callable_class is OpenStruct' do
         before do
           class Conf
             callable_as OpenStruct
@@ -415,7 +407,7 @@ RSpec.describe SmartKv do
 
   context "Subclass of Subclass of SmartConfig" do
     before(:all) do
-      class ChildConfig < described_class
+      class ChildConfig < SmartKv
         required :a_key, :b_key
       end
 

@@ -10,5 +10,4 @@ module SmartKv::Convert
       object_class.new(kv.to_h)
     end
   end
-  module_function :to_callable_object
 end

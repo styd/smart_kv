@@ -1,10 +1,10 @@
 require_relative 'spec_helper'
 
 RSpec.describe SmartKv do
-  it "cannot be instantiated" do
+  it "SmartKv is meant to be inherited" do
     expect {
-      SmartKv.new({})
-    }.to raise_error(SmartKv::InitializationError)
+      SmartKv.check({})
+    }.to raise_error(SmartKv::CheckError, /only subclass of SmartKv is meant to be used/)
   end
 
   context "Subclass of SmartKv" do
@@ -17,7 +17,7 @@ RSpec.describe SmartKv do
 
     it "checks whether there are missing required keys" do
       expect {
-        ModelConfig.new({
+        ModelConfig.check({
           a_key: "value", and_another: "value again"
         })
       }.to raise_error(SmartKv::KeyError, /missing required key\(s\): :another_key/)
@@ -25,7 +25,7 @@ RSpec.describe SmartKv do
 
     it "doesn't complain when all required keys are there" do
       expect {
-        ModelConfig.new({
+        ModelConfig.check({
           a_key: "value", another_key: "another value", and_another: "value again"
         })
       }.not_to raise_error
@@ -33,19 +33,19 @@ RSpec.describe SmartKv do
 
     it "checks whether keys that are not implemented exist", if: SmartKv::Check.has_did_you_mean_key_error? do
       expect {
-        ModelConfig.new({
+        ModelConfig.check({
           a_key: "value", c_key: "value again",
           another_key: "wow.. value", and_another: "excellent"
         })
-      }.to raise_error(SmartKv::KeyError, /key not found: :c_key.*Did you mean\?/m)
+      }.to raise_error(SmartKv::KeyError, /unrecognized key: :c_key for ModelConfig.*Did you mean\?/m)
     end
 
     it "can access the input value from the object" do
-      config_1 = ModelConfig.new({
+      config_1 = ModelConfig.check({
                    a_key: "value", another_key: "another value", and_another: "value again"
                  })
 
-      config_2 = ModelConfig.new(
+      config_2 = ModelConfig.check(
                    OpenStruct.new({
                      a_key: "value", another_key: "another value", and_another: "value again"
                    })
@@ -57,6 +57,18 @@ RSpec.describe SmartKv do
       expect(config_2.a_key).to eq "value"
       expect(config_2.another_key).to eq "another value"
       expect(config_2.and_another).to eq "value again"
+    end
+
+    context 'when inherited from other SmartKv subclass' do
+      before do
+        class ChildModelConfig < ModelConfig
+        end
+      end
+
+      it 'will inherit all its optional and required keys' do
+        expect(ChildModelConfig.optional_keys).to eq ModelConfig.optional_keys
+        expect(ChildModelConfig.required_keys).to eq ModelConfig.required_keys
+      end
     end
 
     context "set callable_as to any class that accepts hash as input" do
@@ -81,7 +93,7 @@ RSpec.describe SmartKv do
           end
 
           it "the instance will be callable as OpenStruct" do
-            config = ConvertableConfig.new({some_key: "value"})
+            config = ConvertableConfig.check({some_key: "value"})
             expect { config.some_key }.not_to raise_error
             expect(config.some_key).to eq "value"
             expect(ConvertableConfig.callable_class).to eq OpenStruct
@@ -96,7 +108,7 @@ RSpec.describe SmartKv do
           end
 
           it "the instance will be callable as instance of Struct" do
-            config = ConvertableConfig.new({some_key: "value"})
+            config = ConvertableConfig.check({some_key: "value"})
             expect { config.some_key }.not_to raise_error
             expect(config.some_key).to eq "value"
             expect(config.members).to eq [:some_key]
@@ -113,7 +125,7 @@ RSpec.describe SmartKv do
           end
 
           it "the instance will be callable as instance of Struct" do
-            config = ConvertableConfig.new({some_key: "value"})
+            config = ConvertableConfig.check({some_key: "value"})
             expect { config.some_key }.not_to raise_error
             expect(config.some_key).to eq "value"
             expect(config.members).to eq [:some_key]
@@ -135,7 +147,7 @@ RSpec.describe SmartKv do
           end
 
           it "the instance will be callable as hash" do
-            config = ConvertableConfig.new(StructKv.new("value"))
+            config = ConvertableConfig.check(StructKv.new("value"))
             expect { config[:some_key] }.not_to raise_error
             expect(config[:some_key]).to eq "value"
             expect(ConvertableConfig.callable_class).to eq Hash
@@ -150,7 +162,7 @@ RSpec.describe SmartKv do
           end
 
           it "the instance will be callable as OpenStruct" do
-            config = ConvertableConfig.new(StructKv.new("value"))
+            config = ConvertableConfig.check(StructKv.new("value"))
             expect { config.some_key }.not_to raise_error
             expect(config.some_key).to eq "value"
             expect(ConvertableConfig.callable_class).to eq OpenStruct
@@ -171,7 +183,7 @@ RSpec.describe SmartKv do
           end
 
           it "the instance will be callable as hash" do
-            config = ConvertableConfig.new(OstructKv)
+            config = ConvertableConfig.check(OstructKv)
             expect { config[:some_key] }.not_to raise_error
             expect(config[:some_key]).to eq "value"
             expect(ConvertableConfig.callable_class).to eq Hash
@@ -186,7 +198,7 @@ RSpec.describe SmartKv do
           end
 
           it "the instance will be callable as instance of Struct" do
-            config = ConvertableConfig.new(OstructKv)
+            config = ConvertableConfig.check(OstructKv)
             expect { config.some_key }.not_to raise_error
             expect(config.some_key).to eq "value"
             expect(config.members).to eq [:some_key]
@@ -203,7 +215,7 @@ RSpec.describe SmartKv do
           end
 
           it "the instance will be callable as instance of Struct" do
-            config = ConvertableConfig.new(OstructKv) 
+            config = ConvertableConfig.check(OstructKv) 
             expect { config.some_key }.not_to raise_error
             expect(config.some_key).to eq "value"
             expect(config.members).to eq [:some_key]
@@ -234,7 +246,7 @@ RSpec.describe SmartKv do
 
       it "accepts the input" do
         expect {
-          ModelConfig.new(
+          ModelConfig.check(
             ConfigStruct.new("value", "wow.. value", "excellent")
           )
         }.not_to raise_error
@@ -244,7 +256,7 @@ RSpec.describe SmartKv do
     context "when given an OpenStruct as input" do
       it "accepts the input" do
         expect {
-          ModelConfig.new(
+          ModelConfig.check(
             OpenStruct.new({
               a_key: "value", another_key: "wow.. value", and_another: "excellent"
             })
@@ -262,7 +274,7 @@ RSpec.describe SmartKv do
 
       it "allows optional keys" do
         expect {
-          ModelConfig.new({
+          ModelConfig.check({
             a_key: "value", another_key: "value 2", and_another: "value again",
             an_optional_key: "I'm optional"})
         }.not_to raise_error
@@ -270,7 +282,7 @@ RSpec.describe SmartKv do
 
       it "does not complain when optional keys are missing" do
         expect {
-          ModelConfig.new({
+          ModelConfig.check({
             a_key: "value", another_key: "value 2", and_another: "value again"
           })
         }.not_to raise_error
@@ -342,7 +354,7 @@ RSpec.describe SmartKv do
           input_hash = {a: 1, b: 2, f: 6}
           input_ostruct = OpenStruct.new(input_hash)
           expect(Conf.callable_class).to eq Hash
-          expect(Conf.new(input_ostruct)).to eq input_hash
+          expect(Conf.check(input_ostruct)).to eq input_hash
         end
       end
 
@@ -357,8 +369,8 @@ RSpec.describe SmartKv do
           input_hash = {a: 1, b: 2, f: 6}
           input_ostruct = OpenStruct.new(input_hash)
           expect(Conf.callable_class).to eq OpenStruct
-          expect{ Conf.new(input_hash) }.not_to raise_error
-          expect(Conf.new(input_hash)).to eq input_ostruct
+          expect{ Conf.check(input_hash) }.not_to raise_error
+          expect(Conf.check(input_hash)).to eq input_ostruct
         end
       end
     end
@@ -383,8 +395,8 @@ RSpec.describe SmartKv do
           input_hash = {a: 1, b: 2, f: 6}
           input_ostruct = OpenStruct.new(input_hash)
           expect(Conf.callable_class).to eq Hash
-          expect{ Conf.new(input_ostruct) }.not_to raise_error
-          expect(Conf.new(input_ostruct)).to eq input_hash
+          expect{ Conf.check(input_ostruct) }.not_to raise_error
+          expect(Conf.check(input_ostruct)).to eq input_hash
         end
       end
 
@@ -399,7 +411,7 @@ RSpec.describe SmartKv do
           input_hash = {a: 1, b: 2, f: 6}
           input_ostruct = OpenStruct.new(input_hash)
           expect(Conf.callable_class).to eq OpenStruct
-          expect(Conf.new(input_hash)).to eq input_ostruct
+          expect(Conf.check(input_hash)).to eq input_ostruct
         end
       end
     end

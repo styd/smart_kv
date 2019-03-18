@@ -7,25 +7,35 @@ module SmartKv::Meat
   include SmartKv::Convert
 
   def required(*args)
-    @required ||= superclass == SmartKv ? Set.new : superclass.required_keys.dup
+    init_required
     @required += args
     @optional -= @required if @optional
     @required
   end
 
   def required_keys
+    init_required
     @required.to_a
   end
 
+  def init_required
+    @required ||= superclass == SmartKv ? Set.new : superclass.required.dup
+  end
+
   def optional(*args)
-    @optional ||= superclass == SmartKv ? Set.new : superclass.optional_keys.dup
+    init_optional
     @optional += args
     @required -= @optional if @required
     @optional
   end
 
   def optional_keys
+    init_optional
     @optional.to_a
+  end
+
+  def init_optional
+    @optional ||= superclass == SmartKv ? Set.new : superclass.optional.dup
   end
 
   def keys
@@ -51,7 +61,7 @@ module SmartKv::Meat
       unrecognized_keys = hash.keys - required_keys - optional_keys
       unless unrecognized_keys.empty?
         key = unrecognized_keys.first
-        raise SmartKv::KeyError.new("key not found: #{key.inspect}.", key: key, receiver: (keys - hash.keys).map {|k| [k, nil] }.to_h)
+        raise SmartKv::KeyError.new("unrecognized key: #{key.inspect} for #{self}.", key: key, receiver: (keys - hash.keys).map {|k| [k, nil] }.to_h)
       end
     end
 
@@ -71,7 +81,7 @@ private
 
   def prevent_direct_instantiation
     if self == SmartKv
-      raise SmartKv::InitializationError, "only subclass of SmartConfig can be instantiated".freeze
+      raise SmartKv::CheckError, "only subclass of SmartKv is meant to be used".freeze
     end
   end
 end

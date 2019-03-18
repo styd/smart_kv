@@ -1,6 +1,6 @@
 module SmartKv::Check
   def has_did_you_mean_key_error?
-    !ENV['TRAVIS'] && defined?(DidYouMean::KeyErrorChecker)
+    defined?(DidYouMean::KeyErrorChecker)
   end
   module_function :has_did_you_mean_key_error?
 

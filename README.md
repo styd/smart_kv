@@ -4,10 +4,7 @@
 [![Coverage Status](https://coveralls.io/repos/github/styd/smart_kv/badge.svg?branch=master)](https://coveralls.io/github/styd/smart_kv?branch=master)
 [![Gem Version](https://badge.fury.io/rb/smart_kv.svg)](https://rubygems.org/gems/smart_kv)
 
-Best practice of writing options or configurations by strictly allowing and requiring keys.
-
-It doesn't have to be options or configurations.
-You can use it for strict request body or other use cases too.
+Write options or configurations without worry of typos and the need to remember all the keys.
 
 ## Background
 
@@ -19,24 +16,12 @@ d = DateTime.now
 e = d.change(hour: 1, minute: 5)
 ```
 
-and then move on with your life.. until you realize that the code doesn't behave as you expected it to behave.  
-But why? Everything looks fine, right? Yes, it does look fine.. but it's not fine.  
-
-So, what's the problem?  
-The problem was the option key `:minute` was not recognized.  
-Eh? :confused:  
-Why didn't it tell me if it was not recognized?  
-
-I wish that too.  
-But `Hash` has a default value of `nil` if key is not found (same thing applies to `OpenStruct`). 
-So, it will fail gracefully even if an option is actually required, unless the developer uses `#fetch` instead of `#[]`.
-Even if the developer uses `#fetch` for required keys, it doesn't actually check if there are foreign keys input.
-Also, most developers won't bother checking each options' key made by the users of the library or method.
-
+You think everything works fine, but it's not.  
+There is no key `:minute` in options used by `#change`.  
 If only the source of the `DateTime#change` method starts like this:
 
 ```ruby
-# this class can be defined on its own file
+# this class can be defined on its own file, just remember to require it
 class ChangeOptions < SmartKv
   optional :nsec, :usec, :year, :month, :day, :hour, :min, :sec, :offset, :start
 end
@@ -44,7 +29,7 @@ end
 class DateTime
 ...
   def change(options)
-    options = ChangeOptions.new(options)
+    options = ChangeOptions.check(options)
     ...
   end
 end
@@ -53,14 +38,14 @@ end
 So, when you do this `d.change(hour: 1, minute: 5)`, it will yell:
 
 ```
-NotImplementedError: unrecognized key(s): `:minute' in ChangeOptions
+KeyError: unrecognized key: :minute in ChangeOptions
 ```
 
 Well, this is better. But, how do you know all the right options?  
-Type: `ChangeOptions.optional_keys` and `ChangeOptions.required_keys`.
+Type: `ChangeOptions.keys`
 
 
-## More Usage Example
+## More Usage Examples
 
 ```ruby
 class Config < SmartKv
@@ -68,7 +53,7 @@ class Config < SmartKv
   optional :an_option
 end
 
-Config.new({some_key: "val"})
+Config.check({some_key: "val"})
 ```
 
 This will complain that you're not using the `:second key`.
@@ -83,7 +68,7 @@ class ChildConfig < Config
   required :first_key
 end
 
-ChildConfig.new({first_key: "val", second_key: "val 2"})
+ChildConfig.check({first_key: "val", second_key: "val 2"})
 ```
 
 This will also complain that you're not using the `:some_key`.
@@ -94,10 +79,10 @@ This will also complain that you're not using the `:some_key`.
 Whatever given as input is callable directly.
 
 ```ruby
-c = Config.new({some_key: "val", second_key: "val 2"})
+c = Config.check({some_key: "val", second_key: "val 2"})
 c[:some_key]
 
-c2 = Config.new(OpenStruct.new({some_key: "val", second_key: "val 2"}))
+c2 = Config.check(OpenStruct.new({some_key: "val", second_key: "val 2"}))
 c2.second_key
 ```
 
@@ -112,7 +97,7 @@ class Convertable < SmartKv
   callable_as OpenStruct
 end
 
-c = Convertable.new({abcd: 123})
+c = Convertable.check({abcd: 123})
 c.abcd #=> 123
 ```
 
@@ -127,7 +112,7 @@ class PostBody < SmartKv
 end
 .
 .
-request.set_form_data(PostBody.new({app_key: "abc", secret_key: "def"}))
+request.set_form_data(PostBody.check({app_key: "abc", secret_key: "def"}))
 ```
 
 
@@ -139,20 +124,6 @@ Add this line to your application's Gemfile:
 gem 'smart_kv'
 ```
 
-And then execute:
-
-    $ bundle
-
-
-## Coming Soon
-
-- [X] Convertable from hash (as input) to OpenStruct (the resulting object) or another object and vice versa
-- [X] Suggests corrections for unrecognized keys using DidYouMean
-- [ ] Support nested/deep key value object as input
-- [ ] Make some nested keys from the same parent key required and some others optional
-- [ ] Accept config file (e.g. `json`, `yaml`, etc.) or file path as input
-
-
 ## Contributing
 
 Bug reports and pull requests are welcome on GitHub at https://github.com/styd/smart_kv. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [Contributor Covenant](http://contributor-covenant.org) code of conduct.
@@ -161,8 +132,3 @@ Bug reports and pull requests are welcome on GitHub at https://github.com/styd/s
 ## License
 
 The gem is available as open source under the terms of the [MIT License](https://opensource.org/licenses/MIT).
-
-
-## Code of Conduct
-
-Everyone interacting in the SmartKv project’s codebases, issue trackers, chat rooms and mailing lists is expected to follow the [code of conduct](https://github.com/styd/smart_kv/blob/master/CODE_OF_CONDUCT.md).

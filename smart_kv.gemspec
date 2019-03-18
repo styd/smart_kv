@@ -9,8 +9,8 @@ Gem::Specification.new do |spec|
   spec.authors       = ["Adrian Setyadi"]
   spec.email         = ["a.styd@yahoo.com"]
 
-  spec.summary       = %q{Smart checks for your key value objects.}
-  spec.description   = %q{Best practice of writing options or configurations by strictly allowing and requiring keys.}
+  spec.summary       = %q{Smart checks for your options or configurations.}
+  spec.description   = %q{Write options or configurations without worry of typos and the need to remember all the keys.}
   spec.homepage      = "https://github.com/styd/smart_kv"
   spec.license       = "MIT"
 

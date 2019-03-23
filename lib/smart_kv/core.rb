@@ -1,10 +1,8 @@
 require_relative "errors"
-require_relative "convert"
+require_relative "helper"
 
-module SmartKv::Meat
-  # The meat of the gem
-
-  include SmartKv::Convert
+module SmartKv::Core
+  include SmartKv::Helper
 
   def required(*args)
     init_required
@@ -43,12 +41,12 @@ module SmartKv::Meat
   end
 
   def check(kv={})
-    prevent_direct_instantiation
+    prevent_direct_usage
 
     object_class = callable_class || kv.class
     kv = kv.dup
 
-    unless SmartKv::Check.production?
+    unless SmartKv::Helper.production?
       required_keys = Array(@required)
       optional_keys = Array(@optional)
 
@@ -79,9 +77,9 @@ module SmartKv::Meat
 
 private
 
-  def prevent_direct_instantiation
+  def prevent_direct_usage
     if self == SmartKv
-      raise SmartKv::CheckError, "only subclass of SmartKv is meant to be used".freeze
+      raise SmartKv::DirectUsageError, "only subclass of SmartKv is meant to be used".freeze
     end
   end
 end

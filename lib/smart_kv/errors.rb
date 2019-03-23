@@ -1,5 +1,5 @@
 class SmartKv
-  CheckError = Class.new(StandardError)
+  DirectUsageError = Class.new(StandardError)
 
   class KeyError < ::KeyError
     attr_reader :key, :receiver

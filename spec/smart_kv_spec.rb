@@ -4,7 +4,7 @@ RSpec.describe SmartKv do
   it "SmartKv is meant to be inherited" do
     expect {
       SmartKv.check({})
-    }.to raise_error(SmartKv::CheckError, /only subclass of SmartKv is meant to be used/)
+    }.to raise_error(SmartKv::DirectUsageError, /only subclass of SmartKv is meant to be used/)
   end
 
   context "Subclass of SmartKv" do
@@ -31,7 +31,7 @@ RSpec.describe SmartKv do
       }.not_to raise_error
     end
 
-    it "checks whether keys that are not implemented exist", if: SmartKv::Check.has_did_you_mean_key_error? do
+    it "checks whether keys that are not implemented exist", if: SmartKv::Helper.has_did_you_mean_key_error? do
       expect {
         ModelConfig.check({
           a_key: "value", c_key: "value again",

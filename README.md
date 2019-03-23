@@ -41,7 +41,7 @@ So, when you do this `d.change(hour: 1, minute: 5)`, it will yell:
 KeyError: unrecognized key: :minute in ChangeOptions
 ```
 
-Well, this is better. But, how do you know all the right options?  
+That's better. But, how do you know all the right options?  
 Type: `ChangeOptions.keys`
 
 
@@ -99,6 +99,23 @@ end
 
 c = Convertable.check({abcd: 123})
 c.abcd #=> 123
+```
+
+
+### Get suggestions
+
+When you make typo when writing a key of an options, you can get suggestions.
+
+```ruby
+class LanguageScore < SmartKv
+  required :ruby
+  optional :rust, :kotlin, :elixir
+end
+
+LanguageScore.check({ruby: 100, korting: 90})
+
+# SmartKv::KeyError: unrecognized key: :korting in LanguageScore.
+# Did you mean?  :kotlin
 ```
 
 

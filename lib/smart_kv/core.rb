@@ -59,7 +59,7 @@ module SmartKv::Core
       unrecognized_keys = hash.keys - required_keys - optional_keys
       unless unrecognized_keys.empty?
         key = unrecognized_keys.first
-        raise SmartKv::KeyError.new("unrecognized key: #{key.inspect} for #{self}.", key: key, receiver: (keys - hash.keys).map {|k| [k, nil] }.to_h)
+        raise SmartKv::KeyError.new("unrecognized key: #{key.inspect} in #{self}.", key: key, receiver: (keys - hash.keys).map {|k| [k, nil] }.to_h)
       end
     end
 

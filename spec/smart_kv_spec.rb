@@ -37,7 +37,7 @@ RSpec.describe SmartKv do
           a_key: "value", c_key: "value again",
           another_key: "wow.. value", and_another: "excellent"
         })
-      }.to raise_error(SmartKv::KeyError, /unrecognized key: :c_key for ModelConfig.*Did you mean\?/m)
+      }.to raise_error(SmartKv::KeyError, /unrecognized key: :c_key in ModelConfig.*Did you mean\?/m)
     end
 
     it "can access the input value from the object" do

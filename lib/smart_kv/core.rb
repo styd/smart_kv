@@ -37,7 +37,8 @@ module SmartKv::Core
   end
 
   def keys
-    Array(@required) + Array(@optional)
+    init_required; init_optional
+    @required + @optional
   end
 
   def check(kv={})
@@ -47,16 +48,13 @@ module SmartKv::Core
     kv = kv.dup
 
     unless SmartKv::Helper.production?
-      required_keys = Array(@required)
-      optional_keys = Array(@optional)
-
       hash = kv.to_h
-      missing_keys = required_keys - hash.keys
+      missing_keys = @required - hash.keys
       unless missing_keys.empty?
         raise SmartKv::KeyError, "missing required key(s): #{missing_keys.map{|k| k.to_sym.inspect }.join(', ')} in #{self.class}"
       end
 
-      unrecognized_keys = hash.keys - required_keys - optional_keys
+      unrecognized_keys = hash.keys - keys.to_a
       unless unrecognized_keys.empty?
         key = unrecognized_keys.first
         raise SmartKv::KeyError.new("unrecognized key: #{key.inspect} in #{self}.", key: key, receiver: (keys - hash.keys).map {|k| [k, nil] }.to_h)

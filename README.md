@@ -132,6 +132,11 @@ end
 request.set_form_data(PostBody.check({app_key: "abc", secret_key: "def"}))
 ```
 
+### Alternative
+
+One close alternative that is quite similar in objective is probably
+[dry-validation](https://github.com/dry-rb/dry-validation).
+
 
 ## Installation
 

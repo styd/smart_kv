@@ -1,3 +1,4 @@
+require 'set'
 require_relative "errors"
 require_relative "helper"
 
@@ -17,7 +18,7 @@ module SmartKv::Core
   end
 
   def init_required
-    @required ||= superclass == SmartKv ? Set.new : superclass.required.dup
+    @required ||= superclass == SmartKv ? ::Set.new : superclass.required.dup
   end
 
   def optional(*args)
@@ -33,7 +34,7 @@ module SmartKv::Core
   end
 
   def init_optional
-    @optional ||= superclass == SmartKv ? Set.new : superclass.optional.dup
+    @optional ||= superclass == SmartKv ? ::Set.new : superclass.optional.dup
   end
 
   def keys

@@ -50,7 +50,7 @@ module SmartKv::Core
 
     unless SmartKv::Helper.production?
       hash = kv.to_h
-      missing_keys = @required - hash.keys
+      missing_keys = required_keys - hash.keys
       unless missing_keys.empty?
         raise SmartKv::KeyError, "missing required key(s): #{missing_keys.map{|k| k.to_sym.inspect }.join(', ')} in #{self.class}"
       end
